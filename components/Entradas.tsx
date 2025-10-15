@@ -125,7 +125,8 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
     const handleViewDetails = (entrada: Entrada) => { setViewingEntrada(entrada); };
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value, type } = e.target;
+        // Fix: Use e.currentTarget instead of e.target to ensure correct typing and prevent potential issues with event bubbling.
+        const { name, value, type } = e.currentTarget;
         
         let finalValue: string | number = value;
 
@@ -153,6 +154,25 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
         const newEstado = e.target.value as 'Correcto' | 'Incidencia';
         setEstado(newEstado);
         if (newEstado === 'Correcto') setFormState(prev => ({ ...prev, incidencia: '', incidenciaImagenes: [] }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Fix: Use e.currentTarget instead of e.target to ensure correct typing.
+        if (e.currentTarget.files) {
+            const files = Array.from(e.currentTarget.files);
+            const imageUrls = files.map(file => `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(file.name)}`);
+            setFormState(prev => ({
+                ...prev,
+                incidenciaImagenes: [...(prev.incidenciaImagenes || []), ...imageUrls],
+            }));
+        }
+    };
+
+    const handleRemoveImage = (indexToRemove: number) => {
+        setFormState(prev => ({
+            ...prev,
+            incidenciaImagenes: (prev.incidenciaImagenes || []).filter((_, index) => index !== indexToRemove),
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -301,6 +321,40 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
                         <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
                             <h4 className="font-semibold text-yellow-800">Detalles de la Incidencia</h4>
                             <textarea id="incidencia" name="incidencia" value={formState.incidencia} onChange={handleChange} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="Describa el problema..."></textarea>
+                            <div>
+                                <label htmlFor="incidencia-imagenes" className="block text-sm font-medium text-yellow-700 mb-1">
+                                    Adjuntar Imágenes
+                                </label>
+                                <input 
+                                    id="incidencia-imagenes" 
+                                    name="incidencia-imagenes" 
+                                    type="file" 
+                                    multiple 
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-dark hover:file:bg-yellow-300 cursor-pointer"
+                                />
+                                {formState.incidenciaImagenes && formState.incidenciaImagenes.length > 0 && (
+                                    <div className="mt-4">
+                                        <p className="text-sm font-medium text-gray-700">Imágenes seleccionadas:</p>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {formState.incidenciaImagenes.map((imageSrc, index) => (
+                                                <div key={index} className="relative">
+                                                    <img src={imageSrc} alt={`Incidencia ${index + 1}`} className="h-20 w-20 object-cover rounded-md" />
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleRemoveImage(index)} 
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold"
+                                                        aria-label="Eliminar imagen"
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                     <div className="pt-6 flex justify-end gap-3">
