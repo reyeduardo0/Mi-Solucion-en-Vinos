@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Salida, User, UserRole, Pack } from '../types';
+import { Salida, User, UserRole, Pack, Notification } from '../types';
 import { mockProducts } from '../data/mockData';
 import Card from './common/Card';
 import Button from './common/Button';
@@ -10,12 +10,20 @@ import AlertTriangleIcon from './icons/AlertTriangleIcon';
 interface SalidasProps {
     user: User;
     salidas: Salida[];
-    onAddSalida: (salida: Omit<Salida, 'id' | 'packs'>) => void;
-    onUpdateSalida: (salida: Salida) => void;
-    onDeleteSalida: (id: string) => void;
+    onAddSalida: (salida: Omit<Salida, 'id' | 'packs'>) => Promise<void>;
+    onUpdateSalida: (salida: Salida) => Promise<void>;
+    onDeleteSalida: (id: string) => Promise<void>;
+    addNotification: (message: string, type?: Notification['type']) => void;
 }
 
-const Salidas: React.FC<SalidasProps> = ({ user, salidas, onAddSalida, onUpdateSalida, onDeleteSalida }) => {
+const toTitleCase = (str: string) => {
+    return str.replace(
+        /\w\S*/g,
+        (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
+};
+
+const Salidas: React.FC<SalidasProps> = ({ user, salidas, onAddSalida, onUpdateSalida, onDeleteSalida, addNotification }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSalida, setEditingSalida] = useState<Salida | null>(null);
     const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -61,20 +69,41 @@ const Salidas: React.FC<SalidasProps> = ({ user, salidas, onAddSalida, onUpdateS
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormState(prev => ({ ...prev, [name]: value }));
+        let finalValue = value;
+
+        switch (name) {
+            case 'albaranSalidaId':
+            case 'camionMatricula':
+                finalValue = value.toUpperCase();
+                break;
+            case 'cliente':
+            case 'transportista':
+            case 'conductor':
+                finalValue = toTitleCase(value);
+                break;
+            default:
+                finalValue = value;
+        }
+        
+        setFormState(prev => ({ ...prev, [name]: finalValue }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingSalida) {
-            onUpdateSalida({
-                ...editingSalida,
-                ...formState,
-            });
-        } else {
-            onAddSalida(formState);
+        try {
+            if (editingSalida) {
+                await onUpdateSalida({
+                    ...editingSalida,
+                    ...formState,
+                });
+            } else {
+                await onAddSalida(formState);
+            }
+            handleCloseModal();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Ocurrió un error al guardar la salida.';
+            addNotification(message, 'error');
         }
-        handleCloseModal();
     };
 
     const handleDeleteRequest = (id: string) => {
@@ -82,12 +111,17 @@ const Salidas: React.FC<SalidasProps> = ({ user, salidas, onAddSalida, onUpdateS
         setIsConfirmDeleteOpen(true);
     };
 
-    const handleConfirmDelete = () => {
-        if (deletingSalidaId) {
-            onDeleteSalida(deletingSalidaId);
+    const handleConfirmDelete = async () => {
+        if (!deletingSalidaId) return;
+        try {
+            await onDeleteSalida(deletingSalidaId);
+            setIsConfirmDeleteOpen(false);
+            setDeletingSalidaId(null);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Ocurrió un error al eliminar la salida.';
+            addNotification(message, 'error');
+            setIsConfirmDeleteOpen(false);
         }
-        setIsConfirmDeleteOpen(false);
-        setDeletingSalidaId(null);
     };
 
     const handlePrintCMR = (salida: Salida) => {
@@ -206,10 +240,10 @@ const Salidas: React.FC<SalidasProps> = ({ user, salidas, onAddSalida, onUpdateS
             <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingSalida ? "Editar Salida" : "Nueva Salida"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input id="albaranSalidaId" name="albaranSalidaId" label="Nº Albarán Salida" type="text" value={formState.albaranSalidaId} onChange={handleChange} required />
+                        <Input id="albaranSalidaId" name="albaranSalidaId" label="Nº Albarán Salida" type="text" value={formState.albaranSalidaId} onChange={handleChange} required style={{ textTransform: 'uppercase' }}/>
                         <Input id="cliente" name="cliente" label="Cliente" type="text" value={formState.cliente} onChange={handleChange} required />
                         <Input id="transportista" name="transportista" label="Transportista" type="text" value={formState.transportista} onChange={handleChange} required />
-                        <Input id="camionMatricula" name="camionMatricula" label="Matrícula Camión" type="text" value={formState.camionMatricula} onChange={handleChange} required />
+                        <Input id="camionMatricula" name="camionMatricula" label="Matrícula Camión" type="text" value={formState.camionMatricula} onChange={handleChange} required style={{ textTransform: 'uppercase' }}/>
                         <Input id="conductor" name="conductor" label="Conductor" type="text" value={formState.conductor} onChange={handleChange} required />
                         <Input id="fechaHora" name="fechaHora" label="Fecha y Hora" type="datetime-local" value={formState.fechaHora} onChange={handleChange} required />
                     </div>

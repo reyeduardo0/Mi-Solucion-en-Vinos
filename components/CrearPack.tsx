@@ -96,7 +96,8 @@ const CrearPack: React.FC<CrearPackProps> = ({ onAddPack }) => {
                         type="text" 
                         placeholder="PED-C-123" 
                         value={pedidoCliente}
-                        onChange={(e) => setPedidoCliente(e.target.value)}
+                        onChange={(e) => setPedidoCliente(e.target.value.toUpperCase())}
+                        style={{ textTransform: 'uppercase' }}
                         required
                     />
 

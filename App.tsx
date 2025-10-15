@@ -14,6 +14,7 @@ import Reportes from './components/Reportes';
 import AuditLogViewer from './components/AuditLog';
 import NotificationContainer from './components/NotificationContainer';
 import GenerarEtiquetas from './components/GenerarEtiquetas';
+import SyncData from './components/SyncData';
 import { User, Page, UserRole, Entrada, Pallet, Pack, Salida, Incidencia, AuditLog, Notification } from './types';
 import { mockUsers, mockEntradas, mockPallets, mockPacks, mockSalidas, mockIncidencias } from './data/mockData';
 import { getAuditLogsFromStorage, saveAuditLogsToStorage } from './services/auditLogService';
@@ -85,7 +86,10 @@ const App: React.FC = () => {
         addNotification('Has cerrado sesión.', 'info');
     };
     
-    const handleAddEntrada = (entrada: Omit<Entrada, 'id' | 'pallets'>) => {
+    const handleAddEntrada = async (entrada: Omit<Entrada, 'id' | 'pallets'>): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de red: No se pudo registrar la entrada.');
+        }
         const newEntrada: Entrada = {
             ...entrada,
             id: `ENT${Date.now()}`,
@@ -96,13 +100,19 @@ const App: React.FC = () => {
         addNotification('Entrada registrada con éxito.', 'success');
     };
 
-    const handleUpdateEntrada = (updatedEntrada: Entrada) => {
+    const handleUpdateEntrada = async (updatedEntrada: Entrada): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de base de datos: La entrada no pudo ser actualizada.');
+        }
         setEntradas(prev => prev.map(e => e.id === updatedEntrada.id ? updatedEntrada : e));
         addAuditLog('UPDATE', 'Entrada', updatedEntrada.id);
         addNotification(`Entrada ${updatedEntrada.albaranId} actualizada.`, 'success');
     };
     
-    const handleDeleteEntrada = (id: string) => {
+    const handleDeleteEntrada = async (id: string): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de permisos: No tienes autorización para eliminar esta entrada.');
+        }
         setEntradas(prev => prev.filter(e => e.id !== id));
         addAuditLog('DELETE', 'Entrada', id);
         addNotification('Entrada eliminada.', 'success');
@@ -121,7 +131,10 @@ const App: React.FC = () => {
         addNotification('Pack creado con éxito.', 'success');
     };
     
-    const handleAddSalida = (salida: Omit<Salida, 'id' | 'packs'>) => {
+    const handleAddSalida = async (salida: Omit<Salida, 'id' | 'packs'>): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de red: No se pudo registrar la salida.');
+        }
         const newSalida: Salida = {
             ...salida,
             id: `SAL${Date.now()}`,
@@ -132,20 +145,29 @@ const App: React.FC = () => {
         addNotification('Salida registrada con éxito.', 'success');
     };
 
-    const handleUpdateSalida = (updatedSalida: Salida) => {
+    const handleUpdateSalida = async (updatedSalida: Salida): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de base de datos: La salida no pudo ser actualizada.');
+        }
         setSalidas(prev => prev.map(s => s.id === updatedSalida.id ? updatedSalida : s));
         addAuditLog('UPDATE', 'Salida', updatedSalida.id);
         addNotification(`Salida ${updatedSalida.albaranSalidaId} actualizada.`, 'success');
     };
 
-    const handleDeleteSalida = (id: string) => {
+    const handleDeleteSalida = async (id: string): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de permisos: No tienes autorización para eliminar esta salida.');
+        }
         setSalidas(prev => prev.filter(s => s.id !== id));
         addAuditLog('DELETE', 'Salida', id);
         addNotification('Salida eliminada.', 'success');
     };
 
-    const handleAddIncidencia = (incidencia: Omit<Incidencia, 'id' | 'fecha' | 'usuarioReporta'>) => {
+    const handleAddIncidencia = async (incidencia: Omit<Incidencia, 'id' | 'fecha' | 'usuarioReporta'>): Promise<void> => {
         if (!currentUser) return;
+        if (Math.random() < 0.2) {
+            throw new Error('Error de red: No se pudo reportar la incidencia.');
+        }
         const newIncidencia: Incidencia = {
             ...incidencia,
             id: `INC${Date.now()}`,
@@ -157,13 +179,19 @@ const App: React.FC = () => {
         addNotification('Incidencia reportada con éxito.', 'success');
     };
 
-    const handleUpdateIncidencia = (updatedIncidencia: Incidencia) => {
+    const handleUpdateIncidencia = async (updatedIncidencia: Incidencia): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de base de datos: La incidencia no pudo ser actualizada.');
+        }
         setIncidencias(prev => prev.map(i => i.id === updatedIncidencia.id ? updatedIncidencia : i));
         addAuditLog('UPDATE', 'Incidencia', updatedIncidencia.id);
         addNotification(`Incidencia ${updatedIncidencia.id} actualizada.`, 'success');
     };
 
-    const handleDeleteIncidencia = (id: string) => {
+    const handleDeleteIncidencia = async (id: string): Promise<void> => {
+        if (Math.random() < 0.2) {
+            throw new Error('Error de permisos: No tienes autorización para eliminar esta incidencia.');
+        }
         setIncidencias(prev => prev.filter(i => i.id !== id));
         addAuditLog('DELETE', 'Incidencia', id);
         addNotification('Incidencia eliminada.', 'success');
@@ -197,7 +225,7 @@ const App: React.FC = () => {
             case Page.Dashboard:
                 return <Dashboard setCurrentPage={setCurrentPage} />;
             case Page.Entradas:
-                return <Entradas user={currentUser} entradas={entradas} onAddEntrada={handleAddEntrada} onUpdateEntrada={handleUpdateEntrada} onDeleteEntrada={handleDeleteEntrada} />;
+                return <Entradas user={currentUser} entradas={entradas} onAddEntrada={handleAddEntrada} onUpdateEntrada={handleUpdateEntrada} onDeleteEntrada={handleDeleteEntrada} addNotification={addNotification} />;
             case Page.Stock:
                 return <Stock pallets={pallets} packs={packs} />;
             case Page.CrearPack:
@@ -209,9 +237,9 @@ const App: React.FC = () => {
                 }
                 return <GenerarEtiquetas addNotification={addNotification} />;
             case Page.Salidas:
-                return <Salidas user={currentUser} salidas={salidas} onAddSalida={handleAddSalida} onUpdateSalida={handleUpdateSalida} onDeleteSalida={handleDeleteSalida} />;
+                return <Salidas user={currentUser} salidas={salidas} onAddSalida={handleAddSalida} onUpdateSalida={handleUpdateSalida} onDeleteSalida={handleDeleteSalida} addNotification={addNotification} />;
             case Page.Incidencias:
-                return <Incidencias user={currentUser} incidencias={incidencias} onAddIncidencia={handleAddIncidencia} onUpdateIncidencia={handleUpdateIncidencia} onDeleteIncidencia={handleDeleteIncidencia}/>;
+                return <Incidencias user={currentUser} incidencias={incidencias} onAddIncidencia={handleAddIncidencia} onUpdateIncidencia={handleUpdateIncidencia} onDeleteIncidencia={handleDeleteIncidencia} addNotification={addNotification}/>;
             case Page.Usuarios:
                  if (currentUser.role !== UserRole.SuperUsuario) {
                     setCurrentPage(Page.Dashboard);
@@ -233,6 +261,12 @@ const App: React.FC = () => {
                     return <Dashboard setCurrentPage={setCurrentPage} />;
                 }
                 return <AuditLogViewer logs={auditLogs} />;
+            case Page.Sincronizacion:
+                if (currentUser.role !== UserRole.SuperUsuario) {
+                    setCurrentPage(Page.Dashboard);
+                    return <Dashboard setCurrentPage={setCurrentPage} />;
+                }
+                return <SyncData />;
             default:
                 return <Dashboard setCurrentPage={setCurrentPage} />;
         }

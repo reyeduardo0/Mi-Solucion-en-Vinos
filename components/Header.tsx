@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { User } from '../types';
+import SupabaseStatus from './SupabaseStatus';
 
 interface HeaderProps {
   user: User;
@@ -9,7 +10,8 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
   return (
-    <header className="flex items-center justify-end h-16 bg-white shadow-sm px-6">
+    <header className="flex items-center justify-between h-16 bg-white shadow-sm px-6">
+      <SupabaseStatus />
       <div className="flex items-center">
         <div className="text-right">
           <p className="font-semibold text-sm">{user.name}</p>

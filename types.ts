@@ -91,6 +91,7 @@ export enum Page {
   Usuarios = 'Usuarios',
   Reportes = 'Reportes',
   Auditoria = 'Auditoria',
+  Sincronizacion = 'Sincronizacion',
 }
 
 export interface AuditLog {

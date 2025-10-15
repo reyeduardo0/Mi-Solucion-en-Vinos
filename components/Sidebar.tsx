@@ -12,6 +12,7 @@ import UserIcon from './icons/UserIcon';
 import DocumentChartBarIcon from './icons/DocumentChartBarIcon';
 import HistoryIcon from './icons/HistoryIcon';
 import TicketIcon from './icons/TicketIcon';
+import CloudArrowUpIcon from './icons/CloudArrowUpIcon';
 
 interface SidebarProps {
   currentPage: Page;
@@ -57,6 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, user }) 
   const adminNavItems = [
       { page: Page.Usuarios, label: 'Usuarios', icon: <UserIcon className="h-5 w-5" />, roles: [UserRole.SuperUsuario] },
       { page: Page.Auditoria, label: 'Auditoría', icon: <HistoryIcon className="h-5 w-5" />, roles: [UserRole.SuperUsuario, UserRole.Administrativo] },
+      { page: Page.Sincronizacion, label: 'Sincronización', icon: <CloudArrowUpIcon className="h-5 w-5" />, roles: [UserRole.SuperUsuario] },
   ];
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(user.role));

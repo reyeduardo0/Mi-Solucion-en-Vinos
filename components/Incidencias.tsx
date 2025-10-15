@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Incidencia, User, UserRole } from '../types';
+import { Incidencia, User, UserRole, Notification } from '../types';
 import Card from './common/Card';
 import Button from './common/Button';
 import Modal from './common/Modal';
@@ -9,12 +9,13 @@ import AlertTriangleIcon from './icons/AlertTriangleIcon';
 interface IncidenciasProps {
   user: User;
   incidencias: Incidencia[];
-  onAddIncidencia: (incidencia: Omit<Incidencia, 'id' | 'fecha' | 'usuarioReporta'>) => void;
-  onUpdateIncidencia: (incidencia: Incidencia) => void;
-  onDeleteIncidencia: (id: string) => void;
+  onAddIncidencia: (incidencia: Omit<Incidencia, 'id' | 'fecha' | 'usuarioReporta'>) => Promise<void>;
+  onUpdateIncidencia: (incidencia: Incidencia) => Promise<void>;
+  onDeleteIncidencia: (id: string) => Promise<void>;
+  addNotification: (message: string, type?: Notification['type']) => void;
 }
 
-const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncidencia, onUpdateIncidencia, onDeleteIncidencia }) => {
+const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncidencia, onUpdateIncidencia, onDeleteIncidencia, addNotification }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIncidencia, setEditingIncidencia] = useState<Incidencia | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -57,17 +58,22 @@ const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncid
     setFormState(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingIncidencia) {
-      onUpdateIncidencia({
-        ...editingIncidencia,
-        ...formState,
-      });
-    } else {
-      onAddIncidencia(formState);
+    try {
+        if (editingIncidencia) {
+          await onUpdateIncidencia({
+            ...editingIncidencia,
+            ...formState,
+          });
+        } else {
+          await onAddIncidencia(formState);
+        }
+        handleCloseModal();
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Ocurrió un error al guardar la incidencia.';
+        addNotification(message, 'error');
     }
-    handleCloseModal();
   };
   
   const handleDeleteRequest = (id: string) => {
@@ -75,12 +81,17 @@ const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncid
     setIsConfirmDeleteOpen(true);
   };
   
-  const handleConfirmDelete = () => {
-    if (deletingIncidenciaId) {
-      onDeleteIncidencia(deletingIncidenciaId);
+  const handleConfirmDelete = async () => {
+    if (!deletingIncidenciaId) return;
+    try {
+        await onDeleteIncidencia(deletingIncidenciaId);
+        setIsConfirmDeleteOpen(false);
+        setDeletingIncidenciaId(null);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Ocurrió un error al eliminar la incidencia.';
+        addNotification(message, 'error');
+        setIsConfirmDeleteOpen(false);
     }
-    setIsConfirmDeleteOpen(false);
-    setDeletingIncidenciaId(null);
   };
 
   const getStatusColor = (status: string) => {
