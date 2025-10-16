@@ -124,15 +124,16 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
     const handleCloseModal = () => { setIsModalOpen(false); setEditingEntrada(null); setViewingEntrada(null); };
     const handleViewDetails = (entrada: Entrada) => { setViewingEntrada(entrada); };
     
+    // Fix: Rewrote handleChange to be more explicit and type-safe, resolving the type inference error.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        // Fix: Use e.currentTarget instead of e.target to ensure correct typing and prevent potential issues with event bubbling.
-        const { name, value, type } = e.currentTarget;
-        
-        let finalValue: string | number = value;
+        const target = e.currentTarget;
+        const name = target.name;
+        const value = target.value;
 
-        if (type === 'number') {
-            finalValue = parseInt(value, 10) || 0;
-        } else if (typeof value === 'string') {
+        if (target instanceof HTMLInputElement && target.type === 'number') {
+            setFormState(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
+        } else {
+            let finalValue = value;
             switch (name) {
                 case 'albaranId':
                 case 'camionMatricula':
@@ -142,12 +143,9 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
                 case 'conductor':
                     finalValue = toTitleCase(value);
                     break;
-                default:
-                    finalValue = value;
             }
+            setFormState(prev => ({ ...prev, [name]: finalValue }));
         }
-        
-        setFormState(prev => ({ ...prev, [name]: finalValue as any }));
     };
 
     const handleEstadoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -157,10 +155,10 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Fix: Use e.currentTarget instead of e.target to ensure correct typing.
         if (e.currentTarget.files) {
             const files = Array.from(e.currentTarget.files);
-            const imageUrls = files.map(file => `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(file.name)}`);
+            // Fix: Explicitly type the 'file' parameter as 'File' to ensure the 'name' property is accessible. This resolves an issue where TypeScript might infer 'file' as 'unknown'.
+            const imageUrls = files.map((file: File) => `https://via.placeholder.com/300x200.png?text=${encodeURIComponent(file.name)}`);
             setFormState(prev => ({
                 ...prev,
                 incidenciaImagenes: [...(prev.incidenciaImagenes || []), ...imageUrls],
@@ -239,7 +237,8 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
             </Card>
 
             <Card>
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="overflow-x-auto hidden md:block">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -281,6 +280,39 @@ const Entradas: React.FC<EntradasProps> = ({ user, entradas, onAddEntrada, onUpd
                         </tbody>
                     </table>
                 </div>
+
+                {/* Mobile Card View */}
+                <div className="space-y-4 md:hidden">
+                    {paginatedEntradas.length > 0 ? paginatedEntradas.map((entrada) => (
+                        <div key={entrada.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-sm font-bold text-dark-gray">{entrada.albaranId}</p>
+                                    <p className="text-xs text-gray-500">{new Date(entrada.fechaHora).toLocaleString('es-ES')}</p>
+                                </div>
+                                {entrada.incidencia ? (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Incidencia</span>
+                                ) : (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Correcto</span>
+                                )}
+                            </div>
+                             <div className="mt-3 text-sm text-gray-700 space-y-1">
+                                <p><span className="font-semibold">Transportista:</span> {entrada.transportista}</p>
+                                <p><span className="font-semibold">Nº Palets:</span> {entrada.numeroPalets}</p>
+                            </div>
+                             <div className="mt-4 pt-3 border-t flex justify-end items-center gap-3">
+                                <button onClick={() => handleViewDetails(entrada)} className="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver</button>
+                                <button onClick={() => handleOpenModal(entrada)} className="text-sm text-primary hover:text-yellow-400 font-medium">Editar</button>
+                                {canDelete && (<button onClick={() => handleDeleteRequest(entrada.id)} className="text-sm text-red-600 hover:text-red-800 font-medium">Eliminar</button>)}
+                            </div>
+                        </div>
+                    )) : (
+                         <div className="text-center py-10 text-gray-500">
+                            <p>No se encontraron entradas.</p>
+                        </div>
+                    )}
+                </div>
+
                 {totalPages > 1 && (
                     <div className="flex justify-between items-center p-4 border-t">
                         <span className="text-sm text-gray-700">

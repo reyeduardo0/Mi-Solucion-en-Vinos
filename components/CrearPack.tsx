@@ -12,7 +12,7 @@ interface PackItem {
 }
 
 interface CrearPackProps {
-    onAddPack: (pack: Omit<Pack, 'id' | 'fechaCreacion' | 'estado' | 'etiquetaUrl'>) => void;
+    onAddPack: (pack: Omit<Pack, 'id' | 'fechaCreacion' | 'estado' | 'etiquetaUrl'>) => Promise<void>;
 }
 
 const CrearPack: React.FC<CrearPackProps> = ({ onAddPack }) => {
@@ -62,7 +62,7 @@ const CrearPack: React.FC<CrearPackProps> = ({ onAddPack }) => {
         resetProductInput();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!pedidoCliente || packItems.length === 0) {
             alert('Debe indicar un número de pedido y añadir al menos un producto al pack.');
@@ -74,14 +74,20 @@ const CrearPack: React.FC<CrearPackProps> = ({ onAddPack }) => {
             productos: packItems,
         };
         
-        onAddPack(newPackData);
+        try {
+            await onAddPack(newPackData);
 
-        alert('Pack creado con éxito. La etiqueta se ha generado.');
+            alert('Pack creado con éxito. La etiqueta se ha generado.');
 
-        const labelUrl = `https://via.placeholder.com/400x200.png?text=Etiqueta+${pedidoCliente}`;
-        window.open(labelUrl, '_blank');
+            const labelUrl = `https://via.placeholder.com/400x200.png?text=Etiqueta+${pedidoCliente}`;
+            window.open(labelUrl, '_blank');
 
-        resetForm();
+            resetForm();
+        } catch (error) {
+            // The notification is already handled by App.tsx, which throws this error.
+            // No need for another alert. The try-catch block prevents the form from resetting on failure.
+            console.error("Failed to create pack:", error);
+        }
     };
 
     return (

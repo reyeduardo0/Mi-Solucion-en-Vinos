@@ -117,7 +117,8 @@ const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncid
       </div>
 
       <Card>
-        <div className="overflow-x-auto">
+         {/* Desktop Table View */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -157,6 +158,30 @@ const Incidencias: React.FC<IncidenciasProps> = ({ user, incidencias, onAddIncid
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobile Card View */}
+        <div className="space-y-4 md:hidden">
+            {incidencias.map((incidencia) => (
+                <div key={incidencia.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-sm font-bold text-dark-gray">{incidencia.id}</p>
+                            <p className="text-xs text-gray-500">{incidencia.fecha} - {incidencia.tipo}</p>
+                        </div>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(incidencia.estado)}`}>
+                            {incidencia.estado}
+                        </span>
+                    </div>
+                    <p className="mt-3 text-sm text-gray-700">{incidencia.descripcion}</p>
+                    <p className="mt-2 text-xs text-gray-500">Reportado por: <span className="font-medium">{incidencia.usuarioReporta}</span></p>
+                    {canManage && (
+                        <div className="mt-4 pt-3 border-t flex justify-end items-center gap-3">
+                            <button onClick={() => handleOpenModal(incidencia)} className="text-sm text-primary hover:text-yellow-400 font-medium">Editar</button>
+                            <button onClick={() => handleDeleteRequest(incidencia.id)} className="text-sm text-red-600 hover:text-red-800 font-medium">Eliminar</button>
+                        </div>
+                    )}
+                </div>
+            ))}
         </div>
       </Card>
 

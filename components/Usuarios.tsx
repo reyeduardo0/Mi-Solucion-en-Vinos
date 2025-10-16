@@ -113,7 +113,8 @@ const Usuarios: React.FC<UsuariosProps> = ({ users, onAddUser, onUpdateUser, onD
             </div>
 
             <Card>
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="overflow-x-auto hidden md:block">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -141,6 +142,27 @@ const Usuarios: React.FC<UsuariosProps> = ({ users, onAddUser, onUpdateUser, onD
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="space-y-4 md:hidden">
+                    {users.map((user) => (
+                        <div key={user.id} className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                             <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-sm font-bold text-dark-gray">{user.name}</p>
+                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                </div>
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                                    {user.role}
+                                </span>
+                            </div>
+                             <div className="mt-4 pt-3 border-t flex justify-end items-center gap-3">
+                                <button onClick={() => handleOpenModal(user)} className="text-sm text-primary hover:text-yellow-400 font-medium">Editar</button>
+                                <button onClick={() => handleDeleteRequest(user.id)} className="text-sm text-red-600 hover:text-red-800 font-medium">Eliminar</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </Card>
 
